@@ -87,7 +87,7 @@ int main(int argc,char **argv)
 		    }
 	
 		    // ------------------ KALEIDOSCOPE
-            if (m.id == 2) {
+            if (m.id == 160) {
                 for (int j = 0; j < outImage.cols/2; ++j) {   
                     for(int i=0;i<outImage.rows/2;i++) {
                         if(i < j) 
