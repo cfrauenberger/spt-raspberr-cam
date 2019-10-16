@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 2.8)
+project(aruco_testproject)
+find_package(aruco REQUIRED )
+find_package(OpenCV REQUIRED)
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+set(CMAKE_CXX_FLAGS "-std=c++11")
+add_executable(aruco_simple aruco_simple.cpp)
+target_link_libraries(aruco_simple  aruco ${OpenCV_LIBRARIES})
