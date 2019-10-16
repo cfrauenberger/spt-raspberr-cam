@@ -24,8 +24,14 @@ int main(int argc,char **argv)
       }
 
       aruco::MarkerDetector MDetector;
+      MDetector.setDictionary("ARUCO_MIP_36h12");
       MDetector.setDetectionMode(aruco::DM_FAST);
       //MDetector.setDetectionMode(aruco::DM_VIDEO_FAST);
+
+      // camera calibration for pose estimation
+      aruco::CameraParameters camera;
+      camera.readFromXMLFile("calibration.yml");
+
       //read the input image
       Mat inImage;
       Mat outImage;
@@ -48,6 +54,8 @@ int main(int argc,char **argv)
       double snapshot_timer = 0;
       bool freeze = false;
       double old_fps=20;
+      bool new_color_set = false;
+      bool new_color_present = false;
 
       while(true) {
         int64 start = getTickCount();
@@ -56,23 +64,23 @@ int main(int argc,char **argv)
         //cvtColor(inImage, outImage, COLOR_BGR2HSV);
         outImage = inImage;
 
-        //Ok, let's detect
-        MDetector.setDictionary("ARUCO_MIP_36h12");
+        new_color_present = false;
+
         //detect markers and for each one, draw info and its boundaries in the image
-        for(auto m:MDetector.detect(inImage)){
-            cout<<m<<endl;
-            cout<<m.Rvec<<" "<<m.Tvec<<endl;
-            m.draw(inImage);
+        for(auto m:MDetector.detect(inImage,camera,0.039)){
+            //cout<<m<<endl;
+            //aruco::CvDrawingUtils::draw3dAxis(inImage,m,camera);
+            //m.draw(inImage);
 
 		    // ------------------ INVERT FRAME
             if (m.id == -1) {
-				bitwise_not(inImage,outImage);
+      				bitwise_not(inImage,outImage);
             }
 		    // ------------------ CLEAR OVERLAY
             if (m.id == -1) {
-				overlay = 0;
-				last_pt.x = -1;
-				last_pt.y = -1;
+			       	overlay = 0;
+      				last_pt.x = -1;
+			      	last_pt.y = -1;
             }
 		    // ------------------ EREASER
             if (m.id == 170) {
@@ -81,23 +89,36 @@ int main(int argc,char **argv)
             }
             // ------------------ CHANGE BRUSH COLOR
             if (m.id == 187) {
-                lineColor = Scalar(0,0,0,0);
-                lineThickness = 20;
+              new_color_present = true;
+              if (!new_color_set) {
+                lineColor = Scalar(rand() % 255, rand() % 255,rand() % 255, 255);
+                lineThickness = 5;
+                cout << lineColor << endl;
+                new_color_set = true;
+              }
             }            
 		    // ------------------ DRAW WITH BRUSH
             if (m.id == 173) {
-				if (last_pt.x != -1 && last_pt.y !=-1)
-					cv:line(overlay, last_pt, m.getCenter(), lineColor, lineThickness);
-				last_pt = m.getCenter();
-				add(inImage,overlay,outImage);
+			      	if (last_pt.x != -1 && last_pt.y !=-1)
+			      		cv:line(overlay, last_pt, m.getCenter(), lineColor, lineThickness);
+		        	last_pt = m.getCenter();
+		        	add(inImage,overlay,outImage);
             }
 		    // ------------------ SNAPSHOT
             if (m.id == 21) {
-                if (freeze == false) {
-    				freeze = true;
-	    			freezeImage = outImage.clone();				        
-	    		}
-		    }
+              if (freeze == false) {
+    	      		freeze = true;
+	         			freezeImage = outImage.clone();				        
+	         		}
+		        }
+		    // ------------------ ROTATE
+            if (m.id == 193) {
+              Mat matRotation = getRotationMatrix2D( 
+                  Point(inImage.cols/2, inImage.rows/2), 
+                  m.Rvec.at<float>(1, 0)*180/3.1415, 1 );
+              Mat imgRotated;
+              warpAffine( inImage, outImage, matRotation, inImage.size() );
+		        }
 	
 		    // ------------------ KALEIDOSCOPE
             if (m.id == 160) {
@@ -112,22 +133,21 @@ int main(int argc,char **argv)
                 kal_add = 0;
                 addWeighted(kal_add,1,kal1,1,0,kal_add);
                 flip(kal1,kal1,0);
-        		addWeighted(kal_add,1,kal1,1,0,kal_add);
-		        flip(kal1,kal1,1);
-        		addWeighted(kal_add,1,kal1,1,0,kal_add);       		
-        		flip(kal1,kal1,0);
-        		addWeighted(kal_add,1,kal1,1,0,kal_add);        		
+            		addWeighted(kal_add,1,kal1,1,0,kal_add);
+    		        flip(kal1,kal1,1);
+            		addWeighted(kal_add,1,kal1,1,0,kal_add);       		
+            		flip(kal1,kal1,0);
+            		addWeighted(kal_add,1,kal1,1,0,kal_add);        		
         		
-        		addWeighted(kal_add,1,kal2,1,0,kal_add);
-        		flip(kal2,kal2,0);
-		        addWeighted(kal_add,1,kal2,1,0,kal_add);
-        		flip(kal2,kal2,1);
-		        addWeighted(kal_add,1,kal2,1,0,kal_add);
-        		flip(kal2,kal2,0);
-		        addWeighted(kal_add,1,kal2,1,0,kal_add);		        
-		        outImage = kal_add;
-		        
-		    }
+            		addWeighted(kal_add,1,kal2,1,0,kal_add);
+            		flip(kal2,kal2,0);
+    		        addWeighted(kal_add,1,kal2,1,0,kal_add);
+            		flip(kal2,kal2,1);
+    		        addWeighted(kal_add,1,kal2,1,0,kal_add);
+            		flip(kal2,kal2,0);
+    		        addWeighted(kal_add,1,kal2,1,0,kal_add);		        
+    		        outImage = kal_add;  		        
+    		    }
 
 	
 		    // ------------------ TIME LAPS
@@ -166,6 +186,10 @@ int main(int argc,char **argv)
 		    }
 
         }
+        
+        
+        if (!new_color_present) new_color_set = false;
+        
         double fps = (old_fps + getTickFrequency() / (getTickCount() - start))/2;
         
         putText(outImage, 
@@ -175,16 +199,16 @@ int main(int argc,char **argv)
             1, // Scale. 2.0 = 2x bigger
             Scalar(255,255,255), // BGR Color
             1); // Line Thickness (Optional)
-        //cout << "  - FPS : " << fps << endl;
+  
         
-		if (freeze == true) {
-    	    imshow("in",freezeImage); // simply show the old outImage again
-    	    if (argc > 1) vid.write(freezeImage);
-			snapshot_timer++;
-			if (snapshot_timer/fps > 5) {
-				snapshot_timer = 0;
-			    freeze = false;
-			}
+    		if (freeze == true) {
+     	    imshow("in",freezeImage); // simply show the old outImage again
+     	    if (argc > 1) vid.write(freezeImage);
+		     	snapshot_timer++;
+    			if (snapshot_timer/fps > 5) {
+		    		snapshot_timer = 0;
+			      freeze = false;
+			    }
         }
         else {
             imshow("in",outImage);
