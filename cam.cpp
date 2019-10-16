@@ -62,11 +62,11 @@ int main(int argc,char **argv)
             m.draw(inImage);
 
 		    // ------------------ INVERT FRAME
-            if (m.id == 0) {
+            if (m.id == -1) {
 				bitwise_not(inImage,outImage);
             }
 		    // ------------------ CLEAR OVERLAY
-            if (m.id == 1) {
+            if (m.id == -1) {
 				overlay = 0;
 				last_pt.x = -1;
 				last_pt.y = -1;
@@ -76,6 +76,19 @@ int main(int argc,char **argv)
 				if (last_pt.x != -1 && last_pt.y !=-1)
 					cv:line(overlay, last_pt, m.getCenter(), Scalar(0, 0, 255, 255), 5);
 				last_pt = m.getCenter();
+				add(inImage,overlay,outImage);
+            }
+		    // ------------------ EREASING WITH MAGIC WAND
+            if (m.id == 170) {
+				int radius = 20;
+				Point centre = m.getCenter();
+				int min_x = max(0,centre.x-radius);
+				int max_x = min(overlay.cols, centre.x+radius);
+				int min_y = max(0,centre.y-radius);
+				int max_y = min(overlay.rows, centre.y+radius);
+				for (int x = min_x; x <= max_x, x++) 
+					for (int y = min_y; y <= max_y, y++) 
+						overlay[x,y] = Scalar (0,0,0,0);
 				add(inImage,overlay,outImage);
             }
 		    // ------------------ SNAPSHOT
