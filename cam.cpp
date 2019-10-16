@@ -33,7 +33,9 @@ int main(int argc,char **argv)
       Mat overlay;
       Mat kal1, kal2, kal_add, rotated, fliped_add;
       Point last_pt(-1,-1);
-      
+      Scalar lineColor = Scalar(0, 0, 0, 0);
+      int lineThickness = 5;
+     
       cap >> overlay; // for it to be the right dimensions
       kal1 = overlay.clone();
       kal2 = kal1.clone();
@@ -58,7 +60,8 @@ int main(int argc,char **argv)
         MDetector.setDictionary("ARUCO_MIP_36h12");
         //detect markers and for each one, draw info and its boundaries in the image
         for(auto m:MDetector.detect(inImage)){
-            // cout<<m<<endl;
+            cout<<m<<endl;
+            cout<<m.Rvec<<" "<<m.Tvec<<endl;
             m.draw(inImage);
 
 		    // ------------------ INVERT FRAME
@@ -71,24 +74,21 @@ int main(int argc,char **argv)
 				last_pt.x = -1;
 				last_pt.y = -1;
             }
-		    // ------------------ DRAW WITH MAGIC WAND
-            if (m.id == 20) {
-				if (last_pt.x != -1 && last_pt.y !=-1)
-					cv:line(overlay, last_pt, m.getCenter(), Scalar(0, 0, 255, 255), 5);
-				last_pt = m.getCenter();
-				add(inImage,overlay,outImage);
-            }
-		    // ------------------ EREASING WITH MAGIC WAND
+		    // ------------------ EREASER
             if (m.id == 170) {
-				int radius = 20;
-				Point centre = m.getCenter();
-				int min_x = max(0,centre.x-radius);
-				int max_x = min(overlay.cols, centre.x+radius);
-				int min_y = max(0,centre.y-radius);
-				int max_y = min(overlay.rows, centre.y+radius);
-				for (int x = min_x; x <= max_x, x++) 
-					for (int y = min_y; y <= max_y, y++) 
-						overlay[x,y] = Scalar (0,0,0,0);
+                lineColor = Scalar(0,0,0,0);
+                lineThickness = 20;
+            }
+            // ------------------ CHANGE BRUSH COLOR
+            if (m.id == 187) {
+                lineColor = Scalar(0,0,0,0);
+                lineThickness = 20;
+            }            
+		    // ------------------ DRAW WITH BRUSH
+            if (m.id == 173) {
+				if (last_pt.x != -1 && last_pt.y !=-1)
+					cv:line(overlay, last_pt, m.getCenter(), lineColor, lineThickness);
+				last_pt = m.getCenter();
 				add(inImage,overlay,outImage);
             }
 		    // ------------------ SNAPSHOT
