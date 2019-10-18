@@ -116,7 +116,6 @@ int main(int argc,char **argv)
           if (last_pt.x != -1 && last_pt.y !=-1)
             line(overlay, last_pt, m.getCenter(), lineColor, lineThickness);
           last_pt = m.getCenter();
-          add(inImage,overlay,outImage);
         }
 		    // ------------------ SNAPSHOT
         if (m.id == 239) {
