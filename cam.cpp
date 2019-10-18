@@ -53,7 +53,7 @@ int main(int argc,char **argv)
     Mat overlay;
     Mat kal1, kal2, kal_add, rotated, fliped_add;
     Point last_pt(-1,-1);
-    Scalar lineColor = Scalar(0, 0, 0, 0);
+    Scalar lineColor = Scalar(rand() % 255, rand() % 255,rand() % 255);
     int lineThickness = 5;
      
     cap >> overlay; // for it to be the right dimensions
@@ -76,19 +76,19 @@ int main(int argc,char **argv)
 
       cap >> inImage;
       //cvtColor(inImage, outImage, COLOR_BGR2HSV);
-      outImage = inImage;
+      add(inImage,overlay,outImage);
 
       new_color_present = false;
 
       //detect markers and for each one, draw info and its boundaries in the image
       for(auto m:MDetector.detect(inImage,camera,0.039)){
         //cout<<m<<endl;
-        //aruco::CvDrawingUtils::draw3dAxis(inImage,m,camera);
-        m.draw(inImage);
+        //aruco::CvDrawingUtils::draw3dAxis(outImage,m,camera);
+        //m.draw(outImage);
 
 		    // ------------------ INVERT FRAME
-        if (m.id == -1) {
-          bitwise_not(inImage,outImage);
+        if (m.id == 113) {
+          bitwise_not(outImage,outImage);
         }
 		    // ------------------ CLEAR OVERLAY
         if (m.id == -1) {
@@ -99,13 +99,13 @@ int main(int argc,char **argv)
 		    // ------------------ EREASER
         if (m.id == 170) {
           lineColor = Scalar(0,0,0,0);
-          lineThickness = 20;
+          lineThickness = 50;
         }
         // ------------------ CHANGE BRUSH COLOR
         if (m.id == 187) {
           new_color_present = true;
           if (!new_color_set) {
-            lineColor = Scalar(rand() % 255, rand() % 255,rand() % 255, 255);
+            lineColor = Scalar(rand() % 255, rand() % 255,rand() % 255);
             lineThickness = 5;
             cout << lineColor << endl;
             new_color_set = true;
@@ -119,7 +119,7 @@ int main(int argc,char **argv)
           add(inImage,overlay,outImage);
         }
 		    // ------------------ SNAPSHOT
-        if (m.id == 21) {
+        if (m.id == 239) {
           if (freeze == false) {
             freeze = true;
             freezeImage = outImage.clone();				        
@@ -128,10 +128,10 @@ int main(int argc,char **argv)
 		    // ------------------ ROTATE
         if (m.id == 193) {
           Mat matRotation = getRotationMatrix2D( 
-          Point(inImage.cols/2, inImage.rows/2), 
-          m.Rvec.at<float>(1, 0)*180/3.1415, 1 );
+            Point(cam_width/2, cam_height/2), 
+            m.Rvec.at<float>(1, 0)*180/3.1415, 1 );
           Mat imgRotated;
-          warpAffine( inImage, outImage, matRotation, inImage.size() );
+          warpAffine( outImage, outImage, matRotation, outImage.size() );
 		    }
 		    // ------------------ KALEIDOSCOPE
         if (m.id == 160) {
@@ -166,8 +166,8 @@ int main(int argc,char **argv)
 
 		    }
 		    // ------------------ INVISIBILITY
-        if (m.id == 6) {
-                
+        if (m.id == 110) {
+          circle(outImage, m.getCenter(), 100, Scalar(0,0,0), -1);
         }
 		    // ------------------ SECOND LOOP
         if (m.id == 7) {
