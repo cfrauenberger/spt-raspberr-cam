@@ -56,6 +56,11 @@ int main(int argc,char **argv)
     // read smiley file 
     Mat smiley = imread(smiley_file, CV_LOAD_IMAGE_COLOR);
     
+    // for saving pngs
+    vector<int> compression_params;
+    compression_params.push_back(IMWRITE_PNG_COMPRESSION);
+    compression_params.push_back(9);
+    
     //read the input image
     Mat inImage;
     Mat outImage;
@@ -94,7 +99,7 @@ int main(int argc,char **argv)
 
       //detect markers and for each one, draw info and its boundaries in the image
       for(auto m:MDetector.detect(inImage,camera,0.039)){
-        //cout<<m.id<<endl;
+        cout<<m.id<<endl;
         //aruco::CvDrawingUtils::draw3dAxis(outImage,m,camera);
         //m.draw(outImage);
 
@@ -115,8 +120,7 @@ int main(int argc,char **argv)
         }
 		    // ------------------ EREASER
         if (m.id == 170) {
-          lineColor = Scalar(0,0,0,0);
-          lineThickness = 50;
+          circle(overlay, m.getCenter(), 50, Scalar(0,0,0,0), FILLED);
         }
         // ------------------ CHANGE BRUSH COLOR
         if (m.id == 187) {
@@ -139,7 +143,23 @@ int main(int argc,char **argv)
         if (m.id == 239) {
           if (freeze == false) {
             freeze = true;
-            freezeImage = outImage.clone();				        
+            freezeImage = outImage.clone();			
+            // get a filename with a time stamp
+            char buff[70];
+            std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+            std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+            std::tm now_tm = *std::localtime(&now_c);
+            strftime(buff, sizeof buff, "%F-%T", &now_tm);
+            // write the image file out
+            string filename(buff, strlen(buff));
+            filename = filename + ".png";
+            cout << "Outputfile:" << filename << endl;
+            imwrite(filename, freezeImage, compression_params);
+            // draw a yellow frame 
+            line(freezeImage, Point(0,0), Point(cam_width,0), Scalar(0,250,250), 50);
+            line(freezeImage, Point(cam_width,0), Point(cam_width,cam_height), Scalar(0,250,250), 50);
+            line(freezeImage, Point(cam_width,cam_height), Point(0,cam_height), Scalar(0,250,250), 50);
+            line(freezeImage, Point(0,cam_height), Point(0,0), Scalar(0,250,250), 50);
           }
         }
 		    // ------------------ ROTATE
@@ -155,7 +175,7 @@ int main(int argc,char **argv)
           flip(outImage, outImage, 0);
 		    }
 		    // ------------------ KALEIDOSCOPE
-        if (m.id == 160) {
+        if (m.id == 110) {
           for (int j = 0; j < outImage.cols/2; ++j) {   
             for(int i=0;i<outImage.rows/2;i++) {
               if(i < j) 
@@ -186,8 +206,8 @@ int main(int argc,char **argv)
         if (m.id == 5) {
 
 		    }
-		    // ------------------ INVISIBILITY
-        if (m.id == 110) {
+		    // ------------------ SMILEY
+        if (m.id == 97) {
           Point center = m.getCenter();
           int radius = floor(m.getRadius());
           Mat res_smiley;
