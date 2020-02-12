@@ -19,15 +19,22 @@ int main(int argc,char **argv)
     VideoWriter vid;
     bool record_vid = false;
     int cam_index = 0;
+    string param_file = "calibration.yml";
+    string smiley_file = "Smiley.png";
 
     // switches 
     for (int i = 1; i<argc; i++) {
       string arg(argv[i]);
       if (arg == "-v") record_vid = true;
-      if (arg.find("-c:") != string::npos) {
-        cam_index = stoi(arg.substr(arg.find("-c:")+3));
-      }
+      if (arg.find("-c=") != string::npos) 
+        cam_index = stoi(arg.substr(arg.find("-c=")+3));
+      if (arg.find("-p=") != string::npos)
+        param_file = arg.substr(arg.find("-p=")+3);
+      if (arg.find("-s=") != string::npos)
+        smiley_file = arg.substr(arg.find("-s=")+3);
     }
+    cout << "Camera: " << cam_index << endl;
+    cout << "Parameter file: " << param_file << endl;
     
     // Initialize camera
     VideoCapture cap(cam_index);
@@ -49,8 +56,11 @@ int main(int argc,char **argv)
 
     // camera calibration for pose estimation
     aruco::CameraParameters camera;
-    camera.readFromXMLFile("calibration.yml");
-
+    camera.readFromXMLFile(param_file);
+    
+    // read smiley file 
+    Mat smiley = imread(smiley_file, CV_LOAD_IMAGE_COLOR);
+    
     //read the input image
     Mat inImage;
     Mat outImage;
@@ -70,7 +80,9 @@ int main(int argc,char **argv)
     kal2 = 0;
     kal_add = 0;
       
+    double fps = 20;
     double snapshot_timer = 0;
+    double stroke_timer = 0;
     bool freeze = false;
     double old_fps=20;
     bool new_color_set = false;
@@ -87,7 +99,7 @@ int main(int argc,char **argv)
 
       //detect markers and for each one, draw info and its boundaries in the image
       for(auto m:MDetector.detect(inImage,camera,0.039)){
-        //cout<<m<<endl;
+        //cout<<m.id<<endl;
         //aruco::CvDrawingUtils::draw3dAxis(outImage,m,camera);
         //m.draw(outImage);
 
@@ -95,6 +107,11 @@ int main(int argc,char **argv)
         if (m.id == 113) {
           bitwise_not(outImage,outImage);
         }
+		    // ------------------ BLACK AND WHITE
+        if (m.id == 94) {
+          cvtColor(outImage, outImage, COLOR_BGR2GRAY);
+          threshold( outImage, outImage, 140, 255,THRESH_BINARY );
+		    }        
 		    // ------------------ CLEAR OVERLAY
         if (m.id == -1) {
           overlay = 0;
@@ -118,9 +135,10 @@ int main(int argc,char **argv)
         }            
 		    // ------------------ DRAW WITH BRUSH
         if (m.id == 173) {
-          if (last_pt.x != -1 && last_pt.y !=-1)
+          if (last_pt.x != -1 && last_pt.y !=-1 && stroke_timer/fps < 1)
             line(overlay, last_pt, m.getCenter(), lineColor, lineThickness);
           last_pt = m.getCenter();
+          stroke_timer = 0;
         }
 		    // ------------------ SNAPSHOT
         if (m.id == 239) {
@@ -136,6 +154,10 @@ int main(int argc,char **argv)
             m.Rvec.at<float>(1, 0)*180/3.1415, 1 );
           Mat imgRotated;
           warpAffine( outImage, outImage, matRotation, outImage.size() );
+		    }
+		    // ------------------ FLIP
+        if (m.id == 102) {
+          flip(outImage, outImage, 0);
 		    }
 		    // ------------------ KALEIDOSCOPE
         if (m.id == 160) {
@@ -171,7 +193,11 @@ int main(int argc,char **argv)
 		    }
 		    // ------------------ INVISIBILITY
         if (m.id == 110) {
-          circle(outImage, m.getCenter(), 100, Scalar(0,0,0), -1);
+          Point center = m.getCenter();
+          int radius = floor(m.getRadius());
+          Mat res_smiley;
+          resize(smiley, res_smiley, Size(2*radius,2*radius), 0,0,INTER_LINEAR);
+          res_smiley.copyTo(outImage(Rect(center.x-radius, center.y-radius, res_smiley.cols, res_smiley.rows)));
         }
 		    // ------------------ SECOND LOOP
         if (m.id == 7) {
@@ -179,10 +205,6 @@ int main(int argc,char **argv)
 		    }
 		    // ------------------ HIGHLIGHT COLOUR
         if (m.id == 8) {
-
-		    }
-		    // ------------------ COLOR FILTERS
-        if (m.id == 9) {
 
 		    }
 		    // ------------------ FACE WARP
@@ -194,7 +216,8 @@ int main(int argc,char **argv)
         
       if (!new_color_present) new_color_set = false;
         
-      double fps = (old_fps + getTickFrequency() / (getTickCount() - start))/2;
+      fps = (old_fps + getTickFrequency() / (getTickCount() - start))/2;
+      stroke_timer++;
 
       cvNamedWindow("in", CV_WINDOW_NORMAL);
       //cvSetWindowProperty("in", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
