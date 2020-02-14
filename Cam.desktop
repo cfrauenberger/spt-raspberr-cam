@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=SPT Camera
+Comment=SocialPlayTechnology Camera
+Icon=/usr/share/pixmaps/openbox.xpm
+Exec=/home/pi/src/spt-raspberr-cam/cam -c=0 -p=/home/pi/src/spt-raspberr-cam/calibration.yml -s=/home/pi/src/spt-raspberr-cam/Smiley.png
+Type=Application
+Encoding=UTF-8
+StartupNotify=true
+Categories=None
