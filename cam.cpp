@@ -1,6 +1,7 @@
 #include <iostream>
 #include <aruco/aruco.h>
 #include <opencv2/highgui.hpp>
+#include <stdlib.h>
 
 using namespace cv;
 using namespace std;
@@ -9,6 +10,7 @@ using namespace std;
 
 int main(int argc,char **argv)
 {
+  int status = system("./sudo python3 set_np.py white");
 	
   try
   {
