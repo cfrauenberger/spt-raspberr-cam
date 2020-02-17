@@ -10,8 +10,7 @@ using namespace std;
 
 int main(int argc,char **argv)
 {
-  int status = system("./sudo python3 set_np.py white");
-	
+  
   try
   {
     VideoWriter vid;
@@ -19,6 +18,8 @@ int main(int argc,char **argv)
     int cam_index = 0;
     string param_file = "calibration.yml";
     string smiley_file = "Smiley.png";
+    string set_np = "set_np.py";
+    string path = "";
 
     // switches 
     for (int i = 1; i<argc; i++) {
@@ -27,12 +28,19 @@ int main(int argc,char **argv)
       if (arg.find("-c=") != string::npos) 
         cam_index = stoi(arg.substr(arg.find("-c=")+3));
       if (arg.find("-p=") != string::npos)
-        param_file = arg.substr(arg.find("-p=")+3);
-      if (arg.find("-s=") != string::npos)
-        smiley_file = arg.substr(arg.find("-s=")+3);
+        path = arg.substr(arg.find("-p=")+3);
     }
+    set_np = "sudo python3 " + path + "/" + set_np;
+    smiley_file = path + "/" + smiley_file;
+    param_file = path + "/" + param_file;
+    
     cout << "Camera: " << cam_index << endl;
     cout << "Parameter file: " << param_file << endl;
+    cout << "Smiley file: " << smiley_file << endl;
+    cout << "Neopixel script: " << set_np << endl;
+    
+    // switch on the light
+    int status = system((set_np + " white").c_str());
     
     // Initialize camera
     VideoCapture cap(cam_index);
@@ -268,6 +276,7 @@ int main(int argc,char **argv)
       
     if (record_vid) vid.release();
     destroyAllWindows();
+    status = system((set_np + " clear").c_str());
 
   } catch (exception &ex)
   {
