@@ -1,5 +1,7 @@
+
 cmake_minimum_required(VERSION 2.8)
 project(spt-raspberr-cam)
+list(APPEND CMAKE_PREFIX_PATH "../aruco-3.1.11/")
 find_package(aruco REQUIRED )
 find_package(OpenCV REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS} )

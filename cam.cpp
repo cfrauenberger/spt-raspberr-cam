@@ -1,7 +1,6 @@
 #include <iostream>
 #include <aruco/aruco.h>
 #include <opencv2/highgui.hpp>
-#include "ws2812-rpi.h"
 
 using namespace cv;
 using namespace std;
@@ -11,9 +10,6 @@ using namespace std;
 int main(int argc,char **argv)
 {
 	
-  NeoPixel *n=new NeoPixel(24);
-  n->effectsDemo();
-  delete n;
   try
   {
     VideoWriter vid;
