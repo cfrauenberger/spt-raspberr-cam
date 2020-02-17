@@ -2,14 +2,19 @@
 #include <aruco/aruco.h>
 #include <opencv2/highgui.hpp>
 #include <stdlib.h>
+#include <X11/Xlib.h>
 
 using namespace cv;
 using namespace std;
 
-
-
 int main(int argc,char **argv)
 {
+  Display* disp = XOpenDisplay(NULL);
+  Screen* scrn = DefaultScreenOfDisplay(disp);
+  int screen_width = scrn->width;
+  int screen_height = scrn->height;
+  
+  cout << "Screen resolution: " << screen_width << " x " << screen_height << endl;
   
   try
   {
@@ -49,10 +54,19 @@ int main(int argc,char **argv)
       return -1;
     }
 
+    // Cam size and scaling to fullscreen
     int cam_width = cap.get(CAP_PROP_FRAME_WIDTH);
     int cam_height = cap.get(CAP_PROP_FRAME_HEIGHT);
+    
+    // Video recorder
     if (record_vid) 
       vid = VideoWriter("cam_video.mp4", VideoWriter::fourcc('M', 'J', 'P', 'G'), 16.0, Size(cam_width,cam_height),true);
+
+    
+    // Create a fullscreen image
+    cvNamedWindow("in", CV_WINDOW_NORMAL);
+    cvSetWindowProperty("in", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+    
 
     // ARUCO Marker detection
     aruco::MarkerDetector MDetector;
@@ -75,6 +89,7 @@ int main(int argc,char **argv)
     //read the input image
     Mat inImage;
     Mat outImage;
+    Mat scaledImage;
     Mat freezeImage;
     Mat overlay;
     Mat kal1, kal2, kal_add, rotated, fliped_add;
@@ -245,14 +260,12 @@ int main(int argc,char **argv)
       fps = (old_fps + getTickFrequency() / (getTickCount() - start))/2;
       stroke_timer++;
 
-      cvNamedWindow("in", CV_WINDOW_NORMAL);
-      //cvSetWindowProperty("in", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
         
       putText(outImage, 
-        to_string(fps),
+        to_string((int)round(fps)),
         Point(10,10), // Coordinates
         FONT_HERSHEY_PLAIN, // Font
-        1, // Scale. 2.0 = 2x bigger
+        0.5, // Scale. 2.0 = 2x bigger
         Scalar(255,255,255), // BGR Color
         1); // Line Thickness (Optional)
   
@@ -267,7 +280,8 @@ int main(int argc,char **argv)
 			  }
       }
       else {
-        imshow("in",outImage);
+	resize(outImage, scaledImage, Size(screen_width,screen_height), 0,0, INTER_LINEAR);
+        imshow("in",scaledImage);
         if (record_vid) vid.write(outImage);
       }
         
