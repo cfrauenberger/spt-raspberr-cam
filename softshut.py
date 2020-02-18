@@ -8,7 +8,7 @@ from time import sleep
 # Map pin seven and eight on the Pi Switch PCB to chosen pins on the Raspberry Pi header
 # The PCB numbering is a legacy with the original design of the board
 PinSeven = 7
-PinEight = 11
+PinEight = 13
 GPIO.setmode(GPIO.BOARD) # Set pin numbering to board numbering
 GPIO.setup(PinSeven, GPIO.IN) # Set up PinSeven as an input
 GPIO.setup(PinEight, GPIO.OUT, initial=1) # Setup PinEight as output
@@ -18,7 +18,7 @@ while (GPIO.input(PinSeven) == False): # While button not pressed
  sleep(0.1); # Sleep 100ms to avoid triggering a shutdown when a spike occured
 
 #switch off the neopixels
-call('sudo python3 /home/pi/src/spt-raspberr-cam/set_np.py clear', shell== False)
+call(["python3", "/home/pi/src/spt-raspberr-cam/set_np.py", "clear"], shell== False)
 
 sleep(2); # Sleep 2s to distinguish a long press from a short press
 
