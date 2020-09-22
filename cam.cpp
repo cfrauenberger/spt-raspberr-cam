@@ -96,6 +96,11 @@ int main(int argc,char **argv)
     Point last_pt(-1,-1);
     Scalar lineColor = Scalar(rand() % 255, rand() % 255,rand() % 255);
     int lineThickness = 5;
+    
+    // masking output to be a circle
+    Mat mask = Mat::ones(cam_height, cam_width, CV_8UC1);
+    circle (mask, Point(cam_width/2, cam_height/2), cam_height/2, Scalar(0,0,0),-1, 8, 0);
+
      
     cap >> overlay; // for it to be the right dimensions
     kal1 = overlay.clone();
@@ -139,13 +144,13 @@ int main(int argc,char **argv)
           threshold( outImage, outImage, 140, 255,THRESH_BINARY );
 		    }        
 		    // ------------------ CLEAR OVERLAY
-        if (m.id == -1) {
+        if (m.id == 170) {
           overlay = 0;
           last_pt.x = -1;
           last_pt.y = -1;
         }
 		    // ------------------ EREASER
-        if (m.id == 170) {
+        if (m.id == -1) {
           circle(overlay, m.getCenter(), 50, Scalar(0,0,0,0), FILLED);
         }
         // ------------------ CHANGE BRUSH COLOR
@@ -269,6 +274,8 @@ int main(int argc,char **argv)
         Scalar(255,255,255), // BGR Color
         1); // Line Thickness (Optional)
   
+      // mask circle
+      outImage.setTo(Scalar(0,0,0), mask);
         
       if (freeze == true) {
         imshow("in",freezeImage); // simply show the old outImage again
@@ -280,7 +287,12 @@ int main(int argc,char **argv)
 			  }
       }
       else {
-	resize(outImage, scaledImage, Size(screen_width,screen_height), 0,0, INTER_LINEAR);
+	//resize(outImage, scaledImage, Size(screen_width,screen_height), 0,0, INTER_LINEAR);
+	resize(outImage, scaledImage, Size(), screen_height/cam_height,screen_height/cam_height, INTER_LINEAR);
+	scaledImage.resize(screen_width, Scalar(0,0,0));
+	Mat black_block(scaledImage.rows, (screen_width-cam_width)/4, scaledImage.type());
+	std::vector<Mat> matrices = { black_block, scaledImage, black_block };
+	hconcat(matrices, scaledImage);
         imshow("in",scaledImage);
         if (record_vid) vid.write(outImage);
       }
