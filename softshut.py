@@ -18,7 +18,7 @@ while (GPIO.input(PinSeven) == False): # While button not pressed
  sleep(0.1); # Sleep 100ms to avoid triggering a shutdown when a spike occured
 
 #switch off the neopixels
-call('sudo python3 /home/pi/src/spt-raspberr-cam/set_np.py clear', shell== False)
+call(["python3", "/home/pi/src/spt-raspberr-cam/set_np.py", "clear"], shell=False)
 
 sleep(2); # Sleep 2s to distinguish a long press from a short press
 
