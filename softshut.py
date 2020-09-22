@@ -8,7 +8,7 @@ from time import sleep
 # Map pin seven and eight on the Pi Switch PCB to chosen pins on the Raspberry Pi header
 # The PCB numbering is a legacy with the original design of the board
 PinSeven = 7
-PinEight = 11
+PinEight = 13
 GPIO.setmode(GPIO.BOARD) # Set pin numbering to board numbering
 GPIO.setup(PinSeven, GPIO.IN) # Set up PinSeven as an input
 GPIO.setup(PinEight, GPIO.OUT, initial=1) # Setup PinEight as output
